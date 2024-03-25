@@ -5,7 +5,7 @@ import numpy as np
 
 
 class HandTracker:
-    def __init__(self, callback=None, title='FingertipMagicMouse'):
+    def __init__(self, callback=None, title='FingertipMagicMouse', camera_id=0, horizontal_flip=False):
         self.callback = callback
         self.mp_drawing = mp.solutions.drawing_utils
         self.mp_hands = mp.solutions.hands
@@ -15,12 +15,13 @@ class HandTracker:
             min_detection_confidence=0.75,
             min_tracking_confidence=0.75
         )
-        self.cap = cv2.VideoCapture(0)
+        self.cap = cv2.VideoCapture(camera_id)
         self.thread = None
         self.running = Event()
         self.window_visible = True
         self.text = ''
         self.title = title
+        self.horizontal_flip = horizontal_flip
 
     def _process_frame(self):
         while self.running.is_set():
@@ -30,6 +31,8 @@ class HandTracker:
 
             frame_height, frame_width, _ = frame.shape
             frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
+            if self.horizontal_flip:
+                frame = cv2.flip(frame, 1)
             results = self.hands.process(frame)
 
             hand_data = []
@@ -63,9 +66,15 @@ class HandTracker:
                         # cv2.putText(frame, f"{idx+1}:({x_pixel},{y_pixel},{z:.2f}) - ({x_norm:.2f},{y_norm:.2f})", (x_pixel, y_pixel-20), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 255, 255), 2)
                         cv2.putText(frame, f"{idx+1}" if not idx + 1 == 1 else f"{idx+1} Type: {hand_info['type']}", (
                             x_pixel, y_pixel-20), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 255, 255), 2)
-            cv2.putText(frame, self.text, (10, frame_height - 40), cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 255, 255), 2)
+            # 显示文字
+            cv2.putText(frame, self.text, (10, frame_height - 40), cv2.FONT_HERSHEY_SIMPLEX, 1, self.text_rgb, 2)
+            # 绘制边框
+            if self.frame_visible:
+                cv2.rectangle(frame, (self.frame_x1, self.frame_y1), (self.frame_x2,
+                              self.frame_y2), self.frame_color, self.frame_thickness)
             cv2.imshow(self.title, frame)
 
+            # esc退出
             if cv2.waitKey(1) & 0xFF == 27:
                 self.stop()
 
@@ -84,8 +93,24 @@ class HandTracker:
     def show_window(self):
         self.window_visible = True
 
-    def show_text(self, text):
+    def set_text(self, text, rgb=(255, 255, 255)):
+        self.text_rgb = rgb
         self.text = text
+
+    def set_title(self, title):
+        self.title = title
+
+    def show_frame(self, x1, y1, x2, y2, color=(0, 255, 0), thickness=1):
+        self.frame_x1 = x1
+        self.frame_y1 = y1
+        self.frame_x2 = x2
+        self.frame_y2 = y2
+        self.frame_color = color
+        self.frame_thickness = thickness
+        self.frame_visible = True
+
+    def hide_frame(self):
+        self.frame_visible = False
 
     def stop(self):
         self.running.clear()
