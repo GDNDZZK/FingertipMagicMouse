@@ -22,6 +22,8 @@ class HandTracker:
         self.text = ''
         self.title = title
         self.horizontal_flip = horizontal_flip
+        self.camera_width = self.cap.get(cv2.CAP_PROP_FRAME_WIDTH)
+        self.camera_height = self.cap.get(cv2.CAP_PROP_FRAME_HEIGHT)
 
     def _process_frame(self):
         while self.running.is_set():
@@ -64,10 +66,15 @@ class HandTracker:
                     for idx, landmark in enumerate(hand_landmarks.landmark):
                         x_pixel, y_pixel, z, x_norm, y_norm = hand_info[idx+1]
                         # cv2.putText(frame, f"{idx+1}:({x_pixel},{y_pixel},{z:.2f}) - ({x_norm:.2f},{y_norm:.2f})", (x_pixel, y_pixel-20), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 255, 255), 2)
-                        cv2.putText(frame, f"{idx+1}" if not idx + 1 == 1 else f"{idx+1} Type: {hand_info['type']}", (
-                            x_pixel, y_pixel-20), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 255, 255), 2)
+                        # cv2.putText(frame, f"{idx+1}" if not idx + 1 == 1 else f"{idx+1} Type: {hand_info['type']}", (x_pixel, y_pixel-20), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 255, 255), 2)
+                        if idx + 1 == 1:
+                            cv2.putText(frame, f"{hand_info['type']}", (
+                                x_pixel, y_pixel-20), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 255, 255), 2)
+                        elif idx+1 == 9:
+                            cv2.putText(frame, '^', (
+                                x_pixel - 11, y_pixel + 5), cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 0, 0), 2)
             # 显示文字
-            cv2.putText(frame, self.text, (10, frame_height - 40), cv2.FONT_HERSHEY_SIMPLEX, 1, self.text_rgb, 2)
+            cv2.putText(frame, self.text, (10, frame_height - 10), cv2.FONT_HERSHEY_SIMPLEX, 1, self.text_rgb, 2)
             # 绘制边框
             if self.frame_visible:
                 cv2.rectangle(frame, (self.frame_x1, self.frame_y1), (self.frame_x2,
@@ -100,11 +107,14 @@ class HandTracker:
     def set_title(self, title):
         self.title = title
 
+    def get_camera_size(self):
+        return self.camera_width, self.camera_height
+
     def show_frame(self, x1, y1, x2, y2, color=(0, 255, 0), thickness=1):
-        self.frame_x1 = x1
-        self.frame_y1 = y1
-        self.frame_x2 = x2
-        self.frame_y2 = y2
+        self.frame_x1 = int(x1)
+        self.frame_y1 = int(y1)
+        self.frame_x2 = int(x2)
+        self.frame_y2 = int(y2)
         self.frame_color = color
         self.frame_thickness = thickness
         self.frame_visible = True
