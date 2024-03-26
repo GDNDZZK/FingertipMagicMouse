@@ -31,7 +31,7 @@ def press(d):
     middle_finger = hand_point[13][1] <= hand_point[12][1] <= hand_point[11][1] <= hand_point[10][1]
     # 无名指是否抬起
     medical_finger = hand_point[17][1] <= hand_point[16][1] <= hand_point[15][1] <= hand_point[14][1]
-    # TODO 计算移动范围,比例
+    # 计算移动范围,比例
     x_proportion = convert_coordinate(p1[2], p2[2], hand_point[9][3])
     y_proportion = convert_coordinate(p1[3], p2[3], hand_point[9][4])
     if x_proportion <= 0:
@@ -47,12 +47,9 @@ def press(d):
     if index_finger:
         ht.set_text(f'{x} {y}')
         mouse_ctl.setPosition(x, y)
-    # if x_proportion <= 0:
-    # x_proportion = 0
-    # elif x_proportion >= 1:
-    # x_proportion = 1
-    # print(x_proportion, y_proportion)
+    # TODO 左右中键
 
+# TODO 设置触发距离
 
 def get_screen_resolution():
     """获取屏幕真实分辨率(不受缩放倍率影响)"""
