@@ -1,6 +1,17 @@
 import tkinter as tk
 from PIL import ImageGrab
 from util.handTracker import HandTracker
+from util.loadSetting import getConfigDict
+
+
+def convert_coordinate(x1, y1, p1):
+    # 计算两个坐标系之间的比例因子
+    scale_factor = 1 / (y1 - x1)
+
+    # 计算坐标系2中的p2
+    p2 = (p1 - x1) * scale_factor
+
+    return p2
 
 
 def press(d):
@@ -20,6 +31,22 @@ def press(d):
     # 无名指是否抬起
     medical_finger = hand_point[17][1] <= hand_point[16][1] <= hand_point[15][1] <= hand_point[14][1]
     # TODO 计算移动范围,比例
+    x_proportion = convert_coordinate(p1[2], p2[2], hand_point[9][3])
+    y_proportion = convert_coordinate(p1[3], p2[3], hand_point[9][4])
+    if x_proportion <= 0:
+        x_proportion = 0
+    elif x_proportion >= 1:
+        x_proportion = 1
+    if y_proportion <= 0:
+        y_proportion = 0
+    elif y_proportion >= 1:
+        y_proportion = 1
+    # if x_proportion <= 0:
+    # x_proportion = 0
+    # elif x_proportion >= 1:
+    # x_proportion = 1
+    # print(x_proportion, y_proportion)
+    
 
 
 def get_screen_resolution():
@@ -139,10 +166,13 @@ def get_rectangle_coordinates(large_length, large_width, small_length, small_wid
     bottom_right_y = top_left_y + small_width
 
     # 返回左上角和右下角的坐标
-    return (top_left_x, top_left_y), (bottom_right_x, bottom_right_y)
+    return [top_left_x, top_left_y], [bottom_right_x, bottom_right_y]
 
 
 def main():
+    global config, screen_width, screen_height, ratio_width, ratio_height, p1, p2, frame_proportion_width, frame_proportion_height
+    # 获取设置
+    config = getConfigDict()
     # 获取屏幕分辨率
     screen_width, screen_height = get_screen_resolution()
     print(screen_width, screen_height)
@@ -159,14 +189,25 @@ def main():
     # 裁剪后的长宽
     ratio_width, ratio_height = max_cropped_size(camera_width, camera_height, proportion_width, proportion_height)
     # 缩放
-    t = 0.8
+    t = float(config['ZOOM_MAGNIFICATION'])
     ratio_width *= t
     ratio_height *= t
     print(ratio_width, ratio_height)
+    # 获取坐标
     p1, p2 = get_rectangle_coordinates(camera_width, camera_height, ratio_width, ratio_height)
+    # 左边转比例
+    p1.append(p1[0] / camera_width)
+    p1.append(p1[1] / camera_height)
+    p2.append(p2[0] / camera_width)
+    p2.append(p2[1] / camera_height)
+    # p1[2], p2[2] = p1[0] / camera_width, p2[0] / camera_width
+    # p1[3], p2[3] = p1[1] / camera_height, p2[1] / camera_height
     # 如果宽更小
     thickness = 1
     ht.show_frame(p1[0], p1[1], p2[0] - thickness, p2[1], thickness=thickness)
+    print(convert_coordinate(p1[2], p2[2], p1[2]))
+    print(convert_coordinate(p1[2], p2[2], 0.5))
+    print(convert_coordinate(p1[2], p2[2], p2[2]))
     # ht.show_frame(10, 20, 30, 40)
 
 
