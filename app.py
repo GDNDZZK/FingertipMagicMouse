@@ -2,6 +2,7 @@ import tkinter as tk
 from PIL import ImageGrab
 from util.handTracker import HandTracker
 from util.loadSetting import getConfigDict
+from util.mouseController import MouseController
 
 
 def convert_coordinate(x1, y1, p1):
@@ -18,9 +19,9 @@ def press(d):
     if not d:
         return
     # 要判断的手
-    hand = "Right"
+    hand = config['HAND']
     # 获取坐标点
-    hand_point = [i for i in d if i['type'] == hand]
+    hand_point = [i for i in d if i['type'].upper() == hand.upper()]
     if not hand_point:
         return
     hand_point = hand_point[0]
@@ -41,12 +42,16 @@ def press(d):
         y_proportion = 0
     elif y_proportion >= 1:
         y_proportion = 1
+    x = int(x_proportion * screen_width)
+    y = int(y_proportion * screen_height)
+    if index_finger:
+        ht.set_text(f'{x} {y}')
+        mouse_ctl.setPosition(x, y)
     # if x_proportion <= 0:
     # x_proportion = 0
     # elif x_proportion >= 1:
     # x_proportion = 1
     # print(x_proportion, y_proportion)
-    
 
 
 def get_screen_resolution():
@@ -170,18 +175,20 @@ def get_rectangle_coordinates(large_length, large_width, small_length, small_wid
 
 
 def main():
-    global config, screen_width, screen_height, ratio_width, ratio_height, p1, p2, frame_proportion_width, frame_proportion_height
+    global config, screen_width, screen_height, ratio_width, ratio_height, p1, p2
+    global ht, mouse_ctl
     # 获取设置
     config = getConfigDict()
+    # 鼠标控制器
+    mouse_ctl = MouseController()
     # 获取屏幕分辨率
     screen_width, screen_height = get_screen_resolution()
     print(screen_width, screen_height)
     proportion_width, proportion_height = calculate_simplified_ratio(screen_width, screen_height)
     print(proportion_width, proportion_height)
     # 手部识别
-    ht = HandTracker(press, camera_id=1, horizontal_flip=True)
+    ht = HandTracker(press, camera_id=1, horizontal_flip=config['HORIZONTAL_FLIP'].upper() == 'TRUE')
     ht.start()
-    ht.set_text('test')
     # 计算判定范围(相机范围中等比例裁切到屏幕比例)
     camera_width, camera_height = ht.get_camera_size()
     print(camera_width, camera_height)

@@ -20,6 +20,7 @@ class HandTracker:
         self.running = Event()
         self.window_visible = True
         self.text = ''
+        self.text_rgb = (255, 255, 255)
         self.title = title
         self.horizontal_flip = horizontal_flip
         self.camera_width = self.cap.get(cv2.CAP_PROP_FRAME_WIDTH)
