@@ -33,22 +33,6 @@ def getConfigDict():
     return result
 
 
-def get_activation_distance():
-    file_path = './config/activationDistance.json'
-    try:
-        with open(file_path, 'r') as file:
-            data = json.load(file)
-        return data
-    except FileNotFoundError:
-        return None
-
-
-def save_activation_distance(data):
-    file_path = './config/activationDistance.json'
-    with open(file_path, 'w') as json_file:
-        json.dump(data, json_file)
-
-
 def keyIsPress(keys, rule):
     """
     传入配置文件读取的规则和键列表,判断规定的键是否按下

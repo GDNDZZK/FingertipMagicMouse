@@ -4,8 +4,7 @@ import tkinter as tk
 from PIL import ImageGrab
 from util.SystemTrayIcon import SystemTrayIcon
 from util.handTracker import HandTracker
-from util.keyboardListener import KeyboardListener
-from util.loadSetting import get_activation_distance, getConfigDict, keyIsPress, save_activation_distance
+from util.loadSetting import getConfigDict, keyIsPress
 from util.mouseController import MouseController
 
 
@@ -19,8 +18,6 @@ def convert_coordinate(x1, y1, p1):
     return p2
 
 
-activation_distance = get_activation_distance()
-now_distance = 0.0
 temp_text = ''
 
 def press(d):
@@ -36,12 +33,16 @@ def press(d):
     hand_point = hand_point[0]
     # 设置当前距离
     now_distance = hand_point[9][2]
+    # // *不准确* 大拇指是否抬起
+    # // thumb =hand_point[5][1] <= hand_point[4][1] <= hand_point[3][1] <= hand_point[2][1]
     # 食指是否抬起
     index_finger = hand_point[9][1] <= hand_point[8][1] <= hand_point[7][1] <= hand_point[6][1]
     # 中指是否抬起
     middle_finger = hand_point[13][1] <= hand_point[12][1] <= hand_point[11][1] <= hand_point[10][1]
     # 无名指是否抬起
     medical_finger = hand_point[17][1] <= hand_point[16][1] <= hand_point[15][1] <= hand_point[14][1]
+    # 小拇指是否抬起
+    little_finger = hand_point[21][1] <= hand_point[20][1] <= hand_point[19][1] <= hand_point[18][1]
     # 计算移动范围,比例
     x_proportion = convert_coordinate(p1[2], p2[2], hand_point[9][3])
     y_proportion = convert_coordinate(p1[3], p2[3], hand_point[9][4])
@@ -55,24 +56,19 @@ def press(d):
         y_proportion = 1
     x = int(x_proportion * screen_width)
     y = int(y_proportion * screen_height)
-    if activation_distance is None:
-        ht.set_text(f'None activation distance', (0, 255, 255))
-    elif not 'F' in activation_distance:
-        ht.set_text(f'None unactivation distance', (0, 255, 255))
-    elif activation_distance['F'] < activation_distance['T']:
-        ht.set_text(f'Error, Press reset', (0, 0, 255))
-    elif index_finger:
+    if index_finger and little_finger and not middle_finger:
+        mouse_ctl.pressLeftButton()
+        temp_text = 'L'
+    else:
+        mouse_ctl.releaseLeftButton()
+        temp_text = ''
+
+    if index_finger:
         mouse_ctl.setPosition(x, y)
-        if now_distance < activation_distance['T'] and not middle_finger and not medical_finger:
-            mouse_ctl.pressLeftButton()
-            temp_text = ' L'
-        elif now_distance > activation_distance['F']:
-            mouse_ctl.releaseLeftButton()
-            temp_text = ''
         ht.set_text(f'{x} {y}' + temp_text)
     else:
         ht.set_text('')
-    # TODO 右中键
+    # TODO 中键
 
 def get_screen_resolution():
     """获取屏幕真实分辨率(不受缩放倍率影响)"""
@@ -218,37 +214,6 @@ def checkPath():
 activation_flag = True
 activation_key_is_press = False
 
-
-def key_press(keys):
-    """
-    处理键盘按键事件。
-
-    Args:
-    keys (list): 按下的按键列表。
-    """
-    global config, ht, activation_flag, activation_key_is_press, activation_distance,now_distance
-    # 设置窗口显示或隐藏
-    if keyIsPress(keys, config['ACTIVATION']):
-        if activation_flag and not activation_key_is_press:
-            print('设置触发距离')
-            activation_flag = False
-            if activation_distance is None:
-                activation_distance = dict()
-            activation_distance['T'] = now_distance
-            print(activation_distance)
-            save_activation_distance(activation_distance)
-            activation_key_is_press = True
-    elif activation_key_is_press:
-        print('设置取消触发距离')
-        activation_flag = True
-        if activation_distance is None:
-            activation_distance = dict()
-        activation_distance['F'] = now_distance
-        print(activation_distance)
-        save_activation_distance(activation_distance)
-        activation_key_is_press = False
-
-
 def main():
     global config, screen_width, screen_height, ratio_width, ratio_height, p1, p2
     global ht, mouse_ctl
@@ -295,14 +260,10 @@ def main():
     # ht.show_frame(10, 20, 30, 40)
     # 托盘图标
     sys_icon = SystemTrayIcon()
-    # 开启键盘监听器
-    listener = KeyboardListener(key_press)
-    listener.start()
     # 开启图标,阻塞主线程
     sys_icon.start()
     # 图标关闭,退出程序
     ht.stop()
-    listener.stop()
     sys.exit(0)
 
 
