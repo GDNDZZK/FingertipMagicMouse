@@ -7,6 +7,7 @@ class MouseController:
 
     def __init__(self):
         """初始化鼠标控制器"""
+        self.left_button_flag = False
         self.mouse = Controller()
 
     def getPosition(self):
@@ -50,11 +51,15 @@ class MouseController:
 
     def pressLeftButton(self):
         """鼠标左键按下"""
-        self.mouse.press(Button.left)
+        if not self.left_button_flag:
+            self.mouse.press(Button.left)
+            self.left_button_flag = True
 
     def releaseLeftButton(self):
         """鼠标左键抬起"""
-        self.mouse.release(Button.left)
+        if self.left_button_flag:
+            self.mouse.release(Button.left)
+            self.left_button_flag = False
 
     def pressRightButton(self):
         """鼠标右键按下"""

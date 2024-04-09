@@ -81,11 +81,7 @@ class HandTracker:
                 cv2.rectangle(frame, (self.frame_x1, self.frame_y1), (self.frame_x2,
                               self.frame_y2), self.frame_color, self.frame_thickness)
             cv2.imshow(self.title, frame)
-
-            # esc退出
-            if cv2.waitKey(1) & 0xFF == 27:
-                self.stop()
-
+            cv2.waitKey(1)
             if self.callback:
                 self.callback(hand_data)
 

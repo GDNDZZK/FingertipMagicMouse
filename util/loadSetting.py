@@ -1,4 +1,7 @@
+import json
 import os
+
+setting_dict = dict()
 
 
 def getConfigDict():
@@ -8,6 +11,7 @@ def getConfigDict():
     Returns:
     - dict
     """
+    global setting_dict
     local_path = './local/config/config.ini'
     file_path = local_path if os.path.exists(local_path) else './config/config.ini'
     # 创建一个空字典
@@ -25,4 +29,46 @@ def getConfigDict():
                 # 将键值对添加到字典中
                 result[key] = value.lower()
     # 返回字典
+    setting_dict = result
     return result
+
+
+def get_activation_distance():
+    file_path = './config/activationDistance.json'
+    try:
+        with open(file_path, 'r') as file:
+            data = json.load(file)
+        return data
+    except FileNotFoundError:
+        return None
+
+
+def save_activation_distance(data):
+    file_path = './config/activationDistance.json'
+    with open(file_path, 'w') as json_file:
+        json.dump(data, json_file)
+
+
+def keyIsPress(keys, rule):
+    """
+    传入配置文件读取的规则和键列表,判断规定的键是否按下
+
+    Args:
+    - keys:['<cmd>','<alt_l>']
+    - rule:"<cmd>与<alt_l>或<cmd>与<alt_gr>"
+
+    Returns:
+    - bool
+    """
+    global setting_dict
+    rule_split = rule.split(setting_dict['OR'])
+    for a_rule in rule_split:
+        rule_keys = a_rule.split(setting_dict['AND'])
+        flag = True
+        for key in rule_keys:
+            if not key in keys:
+                flag = False
+                break
+        if flag:
+            return True
+    return False

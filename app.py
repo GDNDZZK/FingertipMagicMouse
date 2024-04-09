@@ -4,7 +4,8 @@ import tkinter as tk
 from PIL import ImageGrab
 from util.SystemTrayIcon import SystemTrayIcon
 from util.handTracker import HandTracker
-from util.loadSetting import getConfigDict
+from util.keyboardListener import KeyboardListener
+from util.loadSetting import get_activation_distance, getConfigDict, keyIsPress, save_activation_distance
 from util.mouseController import MouseController
 
 
@@ -18,7 +19,12 @@ def convert_coordinate(x1, y1, p1):
     return p2
 
 
+activation_distance = get_activation_distance()
+now_distance = 0.0
+temp_text = ''
+
 def press(d):
+    global activation_distance,now_distance,temp_text
     if not d:
         return
     # 要判断的手
@@ -28,6 +34,8 @@ def press(d):
     if not hand_point:
         return
     hand_point = hand_point[0]
+    # 设置当前距离
+    now_distance = hand_point[9][2]
     # 食指是否抬起
     index_finger = hand_point[9][1] <= hand_point[8][1] <= hand_point[7][1] <= hand_point[6][1]
     # 中指是否抬起
@@ -47,14 +55,24 @@ def press(d):
         y_proportion = 1
     x = int(x_proportion * screen_width)
     y = int(y_proportion * screen_height)
-    if index_finger:
-        ht.set_text(f'{x} {y}')
+    if activation_distance is None:
+        ht.set_text(f'None activation distance', (0, 255, 255))
+    elif not 'F' in activation_distance:
+        ht.set_text(f'None unactivation distance', (0, 255, 255))
+    elif activation_distance['F'] < activation_distance['T']:
+        ht.set_text(f'Error, Press reset', (0, 0, 255))
+    elif index_finger:
         mouse_ctl.setPosition(x, y)
+        if now_distance < activation_distance['T'] and not middle_finger and not medical_finger:
+            mouse_ctl.pressLeftButton()
+            temp_text = ' L'
+        elif now_distance > activation_distance['F']:
+            mouse_ctl.releaseLeftButton()
+            temp_text = ''
+        ht.set_text(f'{x} {y}' + temp_text)
     else:
         ht.set_text('')
-    # TODO 左右中键
-
-# TODO 设置触发距离
+    # TODO 右中键
 
 def get_screen_resolution():
     """获取屏幕真实分辨率(不受缩放倍率影响)"""
@@ -197,6 +215,40 @@ def checkPath():
         print("已切换到文件所在路径。")
 
 
+activation_flag = True
+activation_key_is_press = False
+
+
+def key_press(keys):
+    """
+    处理键盘按键事件。
+
+    Args:
+    keys (list): 按下的按键列表。
+    """
+    global config, ht, activation_flag, activation_key_is_press, activation_distance,now_distance
+    # 设置窗口显示或隐藏
+    if keyIsPress(keys, config['ACTIVATION']):
+        if activation_flag and not activation_key_is_press:
+            print('设置触发距离')
+            activation_flag = False
+            if activation_distance is None:
+                activation_distance = dict()
+            activation_distance['T'] = now_distance
+            print(activation_distance)
+            save_activation_distance(activation_distance)
+            activation_key_is_press = True
+    elif activation_key_is_press:
+        print('设置取消触发距离')
+        activation_flag = True
+        if activation_distance is None:
+            activation_distance = dict()
+        activation_distance['F'] = now_distance
+        print(activation_distance)
+        save_activation_distance(activation_distance)
+        activation_key_is_press = False
+
+
 def main():
     global config, screen_width, screen_height, ratio_width, ratio_height, p1, p2
     global ht, mouse_ctl
@@ -243,10 +295,14 @@ def main():
     # ht.show_frame(10, 20, 30, 40)
     # 托盘图标
     sys_icon = SystemTrayIcon()
+    # 开启键盘监听器
+    listener = KeyboardListener(key_press)
+    listener.start()
     # 开启图标,阻塞主线程
     sys_icon.start()
     # 图标关闭,退出程序
     ht.stop()
+    listener.stop()
     sys.exit(0)
 
 
