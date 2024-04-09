@@ -56,19 +56,29 @@ def press(d):
         y_proportion = 1
     x = int(x_proportion * screen_width)
     y = int(y_proportion * screen_height)
+    # 左键(食指+小拇指)
     if index_finger and little_finger and not middle_finger:
         mouse_ctl.pressLeftButton()
         temp_text = 'L'
     else:
         mouse_ctl.releaseLeftButton()
-        temp_text = ''
-
+        if temp_text == 'L':
+            temp_text = ''
+    # 右键(食指+中指)
+    if index_finger and middle_finger and not little_finger:
+        mouse_ctl.pressRightButton()
+        temp_text = 'R'
+    else:
+        mouse_ctl.releaseRightButton()
+        if temp_text == 'R':
+            temp_text = ''
+    # TODO 中键
+    # 移动鼠标(食指)
     if index_finger:
         mouse_ctl.setPosition(x, y)
         ht.set_text(f'{x} {y}' + temp_text)
     else:
         ht.set_text('')
-    # TODO 中键
 
 def get_screen_resolution():
     """获取屏幕真实分辨率(不受缩放倍率影响)"""
