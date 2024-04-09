@@ -1,5 +1,8 @@
+import os
+import sys
 import tkinter as tk
 from PIL import ImageGrab
+from util.SystemTrayIcon import SystemTrayIcon
 from util.handTracker import HandTracker
 from util.loadSetting import getConfigDict
 from util.mouseController import MouseController
@@ -47,6 +50,8 @@ def press(d):
     if index_finger:
         ht.set_text(f'{x} {y}')
         mouse_ctl.setPosition(x, y)
+    else:
+        ht.set_text('')
     # TODO 左右中键
 
 # TODO 设置触发距离
@@ -171,9 +176,32 @@ def get_rectangle_coordinates(large_length, large_width, small_length, small_wid
     return [top_left_x, top_left_y], [bottom_right_x, bottom_right_y]
 
 
+def checkPath():
+    """确保工作路径正确"""
+    # 获取当前工作路径
+    current_work_dir = os.getcwd()
+    print(f"当前工作路径：{current_work_dir}")
+
+    # 获取当前文件所在路径
+    current_file_dir = os.path.dirname(__file__)
+    print(f"文件所在路径：{current_file_dir}")
+    # 如果文件所在路径末尾是(_internal),跳转到上一级
+    if '_internal' == current_file_dir[-9:]:
+        current_file_dir = current_file_dir[:-9]
+        print('internal')
+        print(f"文件所在路径：{current_file_dir}")
+
+    # 如果工作路径不是文件所在路径，切换到文件所在路径
+    if current_work_dir != current_file_dir:
+        os.chdir(current_file_dir)
+        print("已切换到文件所在路径。")
+
+
 def main():
     global config, screen_width, screen_height, ratio_width, ratio_height, p1, p2
     global ht, mouse_ctl
+    # 确保工作路径正确
+    checkPath()
     # 获取设置
     config = getConfigDict()
     # 鼠标控制器
@@ -213,6 +241,13 @@ def main():
     print(convert_coordinate(p1[2], p2[2], 0.5))
     print(convert_coordinate(p1[2], p2[2], p2[2]))
     # ht.show_frame(10, 20, 30, 40)
+    # 托盘图标
+    sys_icon = SystemTrayIcon()
+    # 开启图标,阻塞主线程
+    sys_icon.start()
+    # 图标关闭,退出程序
+    ht.stop()
+    sys.exit(0)
 
 
 if __name__ == '__main__':
