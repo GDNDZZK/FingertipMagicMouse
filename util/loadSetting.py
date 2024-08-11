@@ -31,28 +31,3 @@ def getConfigDict():
     # 返回字典
     setting_dict = result
     return result
-
-
-def keyIsPress(keys, rule):
-    """
-    传入配置文件读取的规则和键列表,判断规定的键是否按下
-
-    Args:
-    - keys:['<cmd>','<alt_l>']
-    - rule:"<cmd>与<alt_l>或<cmd>与<alt_gr>"
-
-    Returns:
-    - bool
-    """
-    global setting_dict
-    rule_split = rule.split(setting_dict['OR'])
-    for a_rule in rule_split:
-        rule_keys = a_rule.split(setting_dict['AND'])
-        flag = True
-        for key in rule_keys:
-            if not key in keys:
-                flag = False
-                break
-        if flag:
-            return True
-    return False
