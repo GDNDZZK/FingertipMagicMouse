@@ -5,7 +5,7 @@ import numpy as np
 
 
 class HandTracker:
-    def __init__(self, callback=None, title='FingertipMagicMouse', camera_id=0, horizontal_flip=False):
+    def __init__(self, callback=None, title='FingertipMagicMouse', camera_id=0, horizontal_flip=False, move_finger = '食指'):
         self.callback = callback
         self.mp_drawing = mp.solutions.drawing_utils
         self.mp_hands = mp.solutions.hands
@@ -25,6 +25,7 @@ class HandTracker:
         self.horizontal_flip = horizontal_flip
         self.camera_width = self.cap.get(cv2.CAP_PROP_FRAME_WIDTH)
         self.camera_height = self.cap.get(cv2.CAP_PROP_FRAME_HEIGHT)
+        self.move_finger = move_finger
 
     def _process_frame(self):
         while self.running.is_set():
@@ -71,7 +72,16 @@ class HandTracker:
                         if idx + 1 == 1:
                             cv2.putText(frame, f"{hand_info['type']}", (
                                 x_pixel, y_pixel-20), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 255, 255), 2)
-                        elif idx+1 == 9:
+                        elif idx+1 == 9 and self.move_finger == '食指':
+                            cv2.putText(frame, '^', (
+                                x_pixel - 11, y_pixel + 5), cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 0, 0), 2)
+                        elif idx+1 == 13 and self.move_finger == '中指':
+                            cv2.putText(frame, '^', (
+                                x_pixel - 11, y_pixel + 5), cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 0, 0), 2)
+                        elif idx+1 == 17 and self.move_finger == '无名指':
+                            cv2.putText(frame, '^', (
+                                x_pixel - 11, y_pixel + 5), cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 0, 0), 2)
+                        elif idx+1 == 21 and self.move_finger == '小拇指':
                             cv2.putText(frame, '^', (
                                 x_pixel - 11, y_pixel + 5), cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 0, 0), 2)
             # 显示文字

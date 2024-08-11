@@ -156,7 +156,7 @@ temp_text = ''
 
 def press(d):
     """处理每一帧传入的数据,判断与执行"""
-    global now_distance, temp_text
+    global now_distance, temp_text, left_fingers, right_fingers, middle_fingers, move_finger
     if not d:
         return
     # 要判断的手
@@ -178,9 +178,19 @@ def press(d):
     medical_finger = hand_point[17][1] <= hand_point[16][1] <= hand_point[15][1] <= hand_point[14][1]
     # 小拇指是否抬起
     little_finger = hand_point[21][1] <= hand_point[20][1] <= hand_point[19][1] <= hand_point[18][1]
+    # 设置手指集合
+    finger_set = set()
+    if index_finger:
+        finger_set.add('食指')
+    if middle_finger:
+        finger_set.add('中指')
+    if medical_finger:
+        finger_set.add('无名指')
+    if little_finger:
+        finger_set.add('小拇指')
     # 计算移动范围,比例
-    x_proportion = convert_coordinate(p1[2], p2[2], hand_point[9][3])
-    y_proportion = convert_coordinate(p1[3], p2[3], hand_point[9][4])
+    x_proportion = convert_coordinate(p1[2], p2[2], hand_point[9][3] if move_finger == '食指' else hand_point[13][3] if move_finger == '中指' else hand_point[17][3] if move_finger == '无名指' else hand_point[21][3] if move_finger == '小拇指' else 0)
+    y_proportion = convert_coordinate(p1[3], p2[3], hand_point[9][4] if move_finger == '食指' else hand_point[13][4] if move_finger == '中指' else hand_point[17][4] if move_finger == '无名指' else hand_point[21][4] if move_finger == '小拇指' else 0)
     if x_proportion <= 0:
         x_proportion = 0
     elif x_proportion >= 1:
@@ -191,28 +201,36 @@ def press(d):
         y_proportion = 1
     x = int(x_proportion * screen_width)
     y = int(y_proportion * screen_height)
-    # 左键(食指+小拇指)
-    if index_finger and little_finger and not middle_finger:
+    # 左键
+    if left_fingers == finger_set:
         mouse_ctl.pressLeftButton()
         temp_text = 'L'
     else:
         mouse_ctl.releaseLeftButton()
         if temp_text == 'L':
             temp_text = ''
-    # 右键(食指+中指)
-    if index_finger and middle_finger and not little_finger:
+    # 右键
+    if right_fingers == finger_set:
         mouse_ctl.pressRightButton()
         temp_text = 'R'
     else:
         mouse_ctl.releaseRightButton()
         if temp_text == 'R':
             temp_text = ''
-    # TODO 中键
+    # 中键
+    if middle_fingers == finger_set:
+        mouse_ctl.pressMiddleButton()
+        temp_text = 'M'
+    else:
+        mouse_ctl.releaseMiddleButton()
+        if temp_text == 'M':
+            temp_text = ''
+    # TODO 滚轮
     # 移动鼠标(食指)
-    if index_finger:
+    if move_finger in finger_set:
         x, y = filter(x, y)
         mouse_ctl.setPosition(x, y)
-        ht.set_text(f'{x} {y}' + temp_text)
+        ht.set_text(f'{int(x)} {int(y)} {temp_text}')
     else:
         ht.set_text('')
 
@@ -369,7 +387,7 @@ def print_info(*args, end='\n', file=None, flush=False):
 
 def main():
     global config, screen_width, screen_height, ratio_width, ratio_height, p1, p2
-    global ht, mouse_ctl, kalman_params
+    global ht, mouse_ctl, kalman_params, left_fingers, right_fingers, middle_fingers, move_finger
     # 确保工作路径正确
     checkPath()
     # 获取设置
@@ -378,6 +396,14 @@ def main():
     print_info('滤波器:', config['MOVE_FILTER'])
     # 获取卡尔曼滤波器参数
     kalman_params = json.loads(config['KALMAN_PARAM'])
+    # 获取左键手指
+    left_fingers = set(config['LEFT_FINGERS'].split('+'))
+    # 获取右键手指
+    right_fingers = set(config['RIGHT_FINGERS'].split('+'))
+    # 获取中键手指
+    middle_fingers = set(config['MIDDLE_FINGERS'].split('+'))
+    # 获取移动手指
+    move_finger = config['MOVE_FINGER']
     # 鼠标控制器
     mouse_ctl = MouseController()
     # 获取屏幕分辨率
@@ -387,7 +413,7 @@ def main():
     print_info('比例:', proportion_width, proportion_height)
     # 手部识别
     ht = HandTracker(press, camera_id=int(config['CAMERA_ID']),
-                     horizontal_flip=config['HORIZONTAL_FLIP'].upper() == 'TRUE')
+                     horizontal_flip=config['HORIZONTAL_FLIP'].upper() == 'TRUE',move_finger=move_finger)
     ht.start()
     # 计算判定范围(相机范围中等比例裁切到屏幕比例)
     camera_width, camera_height = ht.get_camera_size()
