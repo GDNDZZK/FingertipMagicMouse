@@ -31,12 +31,12 @@ def kalman_filter(current_x, current_y):
 
     :param json_str: 包含卡尔曼滤波器参数的JSON字符串。格式如下:
         {
-            "F": [[num, num], [num, num]],   // 状态转移矩阵
-            "H": [[num, num], [num, num]],   // 观测矩阵
-            "Q": [[num, num], [num, num]],   // 过程噪声协方差
-            "R": [[num, num], [num, num]],   // 观测噪声协方差
+            "f": [[num, num], [num, num]],   // 状态转移矩阵
+            "h": [[num, num], [num, num]],   // 观测矩阵
+            "q": [[num, num], [num, num]],   // 过程噪声协方差
+            "r": [[num, num], [num, num]],   // 观测噪声协方差
             "x": [num, num],                 // 初始状态估计
-            "P": [[num, num], [num, num]]    // 初始状态估计协方差
+            "p": [[num, num], [num, num]]    // 初始状态估计协方差
         }
     :param current_x: 当前x坐标。
     :param current_y: 当前y坐标。
