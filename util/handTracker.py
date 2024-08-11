@@ -105,7 +105,7 @@ class HandTracker:
         self.title = title
 
     def get_camera_size(self):
-        return self.camera_width, self.camera_height
+        return int(self.camera_width), int(self.camera_height)
 
     def show_frame(self, x1, y1, x2, y2, color=(0, 255, 0), thickness=1):
         self.frame_x1 = int(x1)
