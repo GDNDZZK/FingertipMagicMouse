@@ -8,7 +8,7 @@ import tkinter as tk
 from PIL import ImageGrab
 from util.SystemTrayIcon import SystemTrayIcon
 from util.handTracker import HandTracker
-from util.loadSetting import getConfigDict, keyIsPress
+from util.loadSetting import getConfigDict
 from util.mouseController import MouseController
 
 
@@ -25,39 +25,28 @@ def convert_coordinate(x1, y1, p1):
 # 全局变量，用于存储卡尔曼滤波器实例
 kf = None
 
+
 def kalman_filter(current_x, current_y):
     """
-    使用卡尔曼滤波计算当前坐标,参数通过JSON字符串传入。
+    使用卡尔曼滤波计算当前坐标。
 
-    :param json_str: 包含卡尔曼滤波器参数的JSON字符串。格式如下:
-        {
-            "f": [[num, num], [num, num]],   // 状态转移矩阵
-            "h": [[num, num], [num, num]],   // 观测矩阵
-            "q": [[num, num], [num, num]],   // 过程噪声协方差
-            "r": [[num, num], [num, num]],   // 观测噪声协方差
-            "x": [num, num],                 // 初始状态估计
-            "p": [[num, num], [num, num]]    // 初始状态估计协方差
-        }
+    :param sample_size: 采样数量，这里用于初始化卡尔曼滤波器。
     :param current_x: 当前x坐标。
     :param current_y: 当前y坐标。
     :return: 计算后的坐标元组。
     """
-    global kf, kalman_params
-    # 解析JSON字符串
-    F = kalman_params['f']
-    H = kalman_params['h']
-    Q = kalman_params['q']
-    R = kalman_params['r']
-    x = kalman_params['x']
-    P = kalman_params['p']
 
-    kf = KalmanFilter(dim_x=2, dim_z=2)
-    kf.x = np.array(x)          # 初始状态
-    kf.F = np.array(F)          # 状态转移矩阵
-    kf.H = np.array(H)          # 观测矩阵
-    kf.P = np.array(P)          # 初始状态估计协方差
-    kf.Q = np.array(Q)          # 过程噪声协方差
-    kf.R = np.array(R)          # 观测噪声协方差
+    global kf
+
+    # 如果是第一次调用，初始化卡尔曼滤波器
+    if kf is None:
+        kf = KalmanFilter(dim_x=2, dim_z=2)
+        kf.x = np.array([current_x, current_y])  # 初始状态
+        kf.F = np.array([[1., 0.], [0., 1.]])    # 状态转移矩阵
+        kf.H = np.array([[1., 0.], [0., 1.]])    # 观测矩阵
+        kf.P *= 1000.                            # 状态估计协方差矩阵
+        kf.R = np.array([[1., 0.], [0., 1.]])    # 观测噪声协方差矩阵
+        kf.Q = np.array([[1., 0.], [0., 1.]])    # 过程噪声协方差矩阵
 
     # 进行卡尔曼滤波器的预测和更新步骤
     kf.predict()
@@ -69,41 +58,41 @@ def kalman_filter(current_x, current_y):
 
 
 # 全局变量，用于存储历史坐标数据
-history_filter = []
-
+history_filter_avg = []
 
 def moving_average_filter(current_x, current_y):
     """使用移动平均法计算当前坐标"""
-    global history_filter, config
-    sample_size = int(config['MOVE_SAMPLE_SIZE'])
+    global history_filter_avg, config
+    sample_size = int(config['MOVE_SAMPLE_SIZE_AVG'])
     # 将当前坐标添加到历史列表中
-    history_filter.append((current_x, current_y))
+    history_filter_avg.append((current_x, current_y))
 
     # 如果历史数据超过采样数量，则移除最早的数据
-    if len(history_filter) > sample_size:
-        history_filter.pop(0)
+    if len(history_filter_avg) > sample_size:
+        history_filter_avg.pop(0)
 
     # 计算所有历史坐标的平均值
-    avg_x = sum([coord[0] for coord in history_filter]) / len(history_filter)
-    avg_y = sum([coord[1] for coord in history_filter]) / len(history_filter)
+    avg_x = sum([coord[0] for coord in history_filter_avg]) / len(history_filter_avg)
+    avg_y = sum([coord[1] for coord in history_filter_avg]) / len(history_filter_avg)
 
     return avg_x, avg_y
 
-
+# 全局变量，用于存储历史坐标数据
+history_filter_median = []
 def median_filter(current_x, current_y):
     """使用中值滤波计算当前坐标"""
-    global history_filter, config
+    global history_filter_median, config
     # 将当前坐标添加到历史列表中
-    sample_size = int(config['MOVE_SAMPLE_SIZE'])
-    history_filter.append((current_x, current_y))
+    sample_size = int(config['MOVE_SAMPLE_SIZE_MEDIAN'])
+    history_filter_median.append((current_x, current_y))
 
     # 如果历史数据超过采样数量，则移除最早的数据
-    if len(history_filter) > sample_size:
-        history_filter.pop(0)
+    if len(history_filter_median) > sample_size:
+        history_filter_median.pop(0)
 
     # 分别计算x和y坐标的中值
-    x_coords = [coord[0] for coord in history_filter]
-    y_coords = [coord[1] for coord in history_filter]
+    x_coords = [coord[0] for coord in history_filter_median]
+    y_coords = [coord[1] for coord in history_filter_median]
     avg_x = median(x_coords)
     avg_y = median(y_coords)
 
@@ -136,19 +125,18 @@ def threshold_filter(x, y):
 
 def filter(x, y):
     """自动选取指定的方法计算当前坐标"""
-    global config
-    if config['MOVE_FILTER'] == '无':
+    global move_filter
+    if '禁用' in move_filter:
         return x, y
-    elif config['MOVE_FILTER'] == '阈值过滤':
-        return threshold_filter(x, y)
-    elif config['MOVE_FILTER'] == '中值滤波':
-        return median_filter(x, y)
-    elif config['MOVE_FILTER'] == '移动平均':
-        return moving_average_filter(x, y)
-    elif config['MOVE_FILTER'] == '卡尔曼滤波':
-        return kalman_filter(x, y)
-    else:
-        raise ValueError('未知的坐标过滤方法')
+    if '卡尔曼滤波' in move_filter:
+        x, y = kalman_filter(x, y)
+    if '移动平均' in move_filter:
+        x, y = moving_average_filter(x, y)
+    if '中值滤波' in move_filter:
+        x, y = median_filter(x, y)
+    if '阈值过滤' in move_filter:
+        x, y = threshold_filter(x, y)
+    return x, y
 
 
 temp_text = ''
@@ -189,8 +177,10 @@ def press(d):
     if little_finger:
         finger_set.add('小拇指')
     # 计算移动范围,比例
-    x_proportion = convert_coordinate(p1[2], p2[2], hand_point[9][3] if move_finger == '食指' else hand_point[13][3] if move_finger == '中指' else hand_point[17][3] if move_finger == '无名指' else hand_point[21][3] if move_finger == '小拇指' else 0)
-    y_proportion = convert_coordinate(p1[3], p2[3], hand_point[9][4] if move_finger == '食指' else hand_point[13][4] if move_finger == '中指' else hand_point[17][4] if move_finger == '无名指' else hand_point[21][4] if move_finger == '小拇指' else 0)
+    x_proportion = convert_coordinate(p1[2], p2[2], hand_point[9][3] if move_finger == '食指' else hand_point[13][3] if move_finger ==
+                                      '中指' else hand_point[17][3] if move_finger == '无名指' else hand_point[21][3] if move_finger == '小拇指' else 0)
+    y_proportion = convert_coordinate(p1[3], p2[3], hand_point[9][4] if move_finger == '食指' else hand_point[13][4] if move_finger ==
+                                      '中指' else hand_point[17][4] if move_finger == '无名指' else hand_point[21][4] if move_finger == '小拇指' else 0)
     if x_proportion <= 0:
         x_proportion = 0
     elif x_proportion >= 1:
@@ -387,15 +377,14 @@ def print_info(*args, end='\n', file=None, flush=False):
 
 def main():
     global config, screen_width, screen_height, ratio_width, ratio_height, p1, p2
-    global ht, mouse_ctl, kalman_params, left_fingers, right_fingers, middle_fingers, move_finger
+    global ht, mouse_ctl, left_fingers, right_fingers, middle_fingers, move_finger, move_filter
     # 确保工作路径正确
     checkPath()
     # 获取设置
     config = getConfigDict()
     # 打印当前使用的滤波器
     print_info('滤波器:', config['MOVE_FILTER'])
-    # 获取卡尔曼滤波器参数
-    kalman_params = json.loads(config['KALMAN_PARAM'])
+    move_filter = config['MOVE_FILTER'].split('+')
     # 获取左键手指
     left_fingers = set(config['LEFT_FINGERS'].split('+'))
     # 获取右键手指
@@ -413,7 +402,7 @@ def main():
     print_info('比例:', proportion_width, proportion_height)
     # 手部识别
     ht = HandTracker(press, camera_id=int(config['CAMERA_ID']),
-                     horizontal_flip=config['HORIZONTAL_FLIP'].upper() == 'TRUE',move_finger=move_finger)
+                     horizontal_flip=config['HORIZONTAL_FLIP'].upper() == 'TRUE', move_finger=move_finger)
     ht.start()
     # 计算判定范围(相机范围中等比例裁切到屏幕比例)
     camera_width, camera_height = ht.get_camera_size()

@@ -9,6 +9,7 @@ class MouseController:
         """初始化鼠标控制器"""
         self.left_button_flag = False
         self.right_button_flag = False
+        self.middle_button_flag = False
         self.mouse = Controller()
 
     def getPosition(self):
@@ -76,11 +77,15 @@ class MouseController:
 
     def pressMiddleButton(self):
         """鼠标中键按下"""
-        self.mouse.press(Button.middle)
+        if not self.middle_button_flag:
+            self.mouse.press(Button.middle)
+            self.middle_button_flag = True
 
     def releaseMiddleButton(self):
         """鼠标中键抬起"""
-        self.mouse.release(Button.middle)
+        if self.middle_button_flag:
+            self.mouse.release(Button.middle)
+            self.middle_button_flag = False
 
     def scrollUp(self, mouse_scroll_speed=3):
         """鼠标滚轮向上滚动"""
