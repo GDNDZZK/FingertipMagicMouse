@@ -1,5 +1,6 @@
 import json
 from statistics import median
+import time
 import numpy as np
 from filterpy.kalman import KalmanFilter
 import os
@@ -56,9 +57,9 @@ def kalman_filter(current_x, current_y):
     return kf.x[0], kf.x[1]
 
 
-
 # 全局变量，用于存储历史坐标数据
 history_filter_avg = []
+
 
 def moving_average_filter(current_x, current_y):
     """使用移动平均法计算当前坐标"""
@@ -77,8 +78,11 @@ def moving_average_filter(current_x, current_y):
 
     return avg_x, avg_y
 
+
 # 全局变量，用于存储历史坐标数据
 history_filter_median = []
+
+
 def median_filter(current_x, current_y):
     """使用中值滤波计算当前坐标"""
     global history_filter_median, config
@@ -144,7 +148,7 @@ temp_text = ''
 
 def press(d):
     """处理每一帧传入的数据,判断与执行"""
-    global now_distance, temp_text, left_fingers, right_fingers, middle_fingers, move_finger
+    global now_distance, temp_text, left_fingers, right_fingers, middle_fingers, move_finger, left_click_finger, right_click_finger
     if not d:
         return
     # 要判断的手
@@ -195,17 +199,29 @@ def press(d):
     if left_fingers == finger_set:
         mouse_ctl.pressLeftButton()
         temp_text = 'L'
+    elif left_click_finger == finger_set:
+        if not temp_text == 'LC':
+            mouse_ctl.pressLeftButton()
+            temp_text = 'LC'
+            time.sleep(0.01)
+            mouse_ctl.releaseLeftButton()
     else:
         mouse_ctl.releaseLeftButton()
-        if temp_text == 'L':
+        if temp_text in ['L', 'LC']:
             temp_text = ''
     # 右键
     if right_fingers == finger_set:
         mouse_ctl.pressRightButton()
         temp_text = 'R'
+    elif right_click_finger == finger_set:
+        if not temp_text == 'RC':
+            mouse_ctl.pressRightButton()
+            temp_text = 'RC'
+            time.sleep(0.01)
+            mouse_ctl.releaseRightButton()
     else:
         mouse_ctl.releaseRightButton()
-        if temp_text == 'R':
+        if temp_text in ['R', 'RC']:
             temp_text = ''
     # 中键
     if middle_fingers == finger_set:
@@ -377,7 +393,7 @@ def print_info(*args, end='\n', file=None, flush=False):
 
 def main():
     global config, screen_width, screen_height, ratio_width, ratio_height, p1, p2
-    global ht, mouse_ctl, left_fingers, right_fingers, middle_fingers, move_finger, move_filter
+    global ht, mouse_ctl, left_fingers, right_fingers, middle_fingers, move_finger, move_filter, left_click_finger, right_click_finger
     # 确保工作路径正确
     checkPath()
     # 获取设置
@@ -387,8 +403,10 @@ def main():
     move_filter = config['MOVE_FILTER'].split('+')
     # 获取左键手指
     left_fingers = set(config['LEFT_FINGERS'].split('+'))
+    left_click_finger = set(config['LEFT_CLICK_FINGER'].split('+'))
     # 获取右键手指
     right_fingers = set(config['RIGHT_FINGERS'].split('+'))
+    right_click_finger = set(config['RIGHT_CLICK_FINGER'].split('+'))
     # 获取中键手指
     middle_fingers = set(config['MIDDLE_FINGERS'].split('+'))
     # 获取移动手指

@@ -15,7 +15,7 @@ class SystemTrayIcon:
         self.icon.run()
 
     def on_exit(self):
-        print('exit触发')
+        print('INFO: exit触发')
         self.icon.stop()
 
     def change_icon(self, image):
