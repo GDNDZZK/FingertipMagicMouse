@@ -87,18 +87,22 @@ class MouseController:
             self.mouse.release(Button.middle)
             self.middle_button_flag = False
 
+    def scroll(self, x, y):
+        """鼠标滚轮滚动"""
+        self.mouse.scroll(x, y)
+
     def scrollUp(self, mouse_scroll_speed=3):
         """鼠标滚轮向上滚动"""
-        self.mouse.scroll(0, mouse_scroll_speed)
+        self.scroll(0, mouse_scroll_speed)
 
     def scrollDown(self, mouse_scroll_speed=3):
         """鼠标滚轮向下滚动"""
-        self.mouse.scroll(0, -1 * mouse_scroll_speed)
+        self.scroll(0, -1 * mouse_scroll_speed)
 
     def scrollLeft(self, mouse_scroll_speed=3):
         """鼠标滚轮向左滚动"""
-        self.mouse.scroll(-1 * mouse_scroll_speed, 0)
+        self.scroll(-1 * mouse_scroll_speed, 0)
 
     def scrollRight(self, mouse_scroll_speed=3):
         """鼠标滚轮向右滚动"""
-        self.mouse.scroll(mouse_scroll_speed, 0)
+        self.scroll(mouse_scroll_speed, 0)

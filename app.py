@@ -145,10 +145,12 @@ def filter(x, y):
 
 temp_text = ''
 
+scroll_point = None
+
 
 def press(d):
     """处理每一帧传入的数据,判断与执行"""
-    global now_distance, temp_text, left_fingers, right_fingers, middle_fingers, move_finger, left_click_finger, right_click_finger
+    global now_distance, temp_text, left_fingers, right_fingers, middle_fingers, move_finger, left_click_finger, right_click_finger, scroll_point, scroll_speed, proportion_height, proportion_width, scroll_x_flip, scroll_y_flip
     if not d:
         return
     # 要判断的手
@@ -182,9 +184,9 @@ def press(d):
         finger_set.add('小拇指')
     # 计算移动范围,比例
     x_proportion = convert_coordinate(p1[2], p2[2], hand_point[9][3] if move_finger == '食指' else hand_point[13][3] if move_finger ==
-                                      '中指' else hand_point[17][3] if move_finger == '无名指' else hand_point[21][3] if move_finger == '小拇指' else 0)
+                                      '中指' else hand_point[17][3] if move_finger == '无名指' else hand_point[21][3] if move_finger == '小拇指' else hand_point[1][3])
     y_proportion = convert_coordinate(p1[3], p2[3], hand_point[9][4] if move_finger == '食指' else hand_point[13][4] if move_finger ==
-                                      '中指' else hand_point[17][4] if move_finger == '无名指' else hand_point[21][4] if move_finger == '小拇指' else 0)
+                                      '中指' else hand_point[17][4] if move_finger == '无名指' else hand_point[21][4] if move_finger == '小拇指' else hand_point[1][4])
     if x_proportion <= 0:
         x_proportion = 0
     elif x_proportion >= 1:
@@ -232,13 +234,38 @@ def press(d):
         if temp_text == 'M':
             temp_text = ''
     # TODO 滚轮
+    # 如果开启滚轮动作
+    if scroll_fingers == finger_set:
+        temp_text = 'S'
+        # 如果没有记录上一次位置,记录
+        if not scroll_point:
+            scroll_point = [hand_point[1][3], hand_point[1][4]]
+        else:
+            # 计算移动距离
+            x_result = (hand_point[1][3] - scroll_point[0]) * scroll_speed * proportion_height
+            if scroll_x_flip:
+                x_result = -x_result
+            y_result = (hand_point[1][4] - scroll_point[1]) * scroll_speed * proportion_width
+            if scroll_y_flip:
+                y_result = -y_result
+            # 移动鼠标滚轮
+            mouse_ctl.scroll(x_result, y_result)
+            # 记录位置
+            scroll_point = [hand_point[1][3], hand_point[1][4]]
+    else:
+        scroll_point = None
+        if temp_text == 'S':
+            temp_text = ''
+
     # 移动鼠标(食指)
     if move_finger in finger_set:
         x, y = filter(x, y)
         mouse_ctl.setPosition(x, y)
         ht.set_text(f'{int(x)} {int(y)} {temp_text}')
+    elif not temp_text:
+            ht.set_text('')
     else:
-        ht.set_text('')
+        ht.set_text(temp_text)
 
 
 def get_screen_resolution():
@@ -392,8 +419,8 @@ def print_info(*args, end='\n', file=None, flush=False):
 
 
 def main():
-    global config, screen_width, screen_height, ratio_width, ratio_height, p1, p2
-    global ht, mouse_ctl, left_fingers, right_fingers, middle_fingers, move_finger, move_filter, left_click_finger, right_click_finger
+    global config, screen_width, screen_height, ratio_width, ratio_height, p1, p2, proportion_width, proportion_height, scroll_x_flip, scroll_y_flip
+    global ht, mouse_ctl, left_fingers, right_fingers, middle_fingers, move_finger, move_filter, left_click_finger, right_click_finger, scroll_fingers, scroll_speed
     # 确保工作路径正确
     checkPath()
     # 获取设置
@@ -409,6 +436,10 @@ def main():
     right_click_finger = set(config['RIGHT_CLICK_FINGER'].split('+'))
     # 获取中键手指
     middle_fingers = set(config['MIDDLE_FINGERS'].split('+'))
+    scroll_fingers = set(config['SCROLL_FINGERS'].split('+'))
+    scroll_speed = float(config['SCROLL_SPEED'])
+    scroll_x_flip = config['SCROLL_X_FLIP'].upper() == 'TRUE'
+    scroll_y_flip = config['SCROLL_Y_FLIP'].upper() == 'TRUE'
     # 获取移动手指
     move_finger = config['MOVE_FINGER']
     # 鼠标控制器
