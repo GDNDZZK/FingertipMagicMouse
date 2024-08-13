@@ -150,7 +150,7 @@ scroll_point = None
 
 def press(d):
     """处理每一帧传入的数据,判断与执行"""
-    global now_distance, temp_text, left_fingers, right_fingers, middle_fingers, move_finger, left_click_finger, right_click_finger, scroll_point, scroll_speed, proportion_height, proportion_width, scroll_x_flip, scroll_y_flip
+    global now_distance, temp_text, left_fingers, right_fingers, middle_fingers, move_finger, left_click_finger, right_click_finger, scroll_point, scroll_speed, proportion_height, proportion_width, scroll_x_flip, scroll_y_flip, middle_click_fingers
     if not d:
         return
     # 要判断的手
@@ -229,11 +229,16 @@ def press(d):
     if middle_fingers == finger_set:
         mouse_ctl.pressMiddleButton()
         temp_text = 'M'
+    elif middle_click_fingers == finger_set:
+        mouse_ctl.pressMiddleButton()
+        temp_text = 'MC'
+        time.sleep(0.01)
+        mouse_ctl.releaseMiddleButton()
     else:
         mouse_ctl.releaseMiddleButton()
-        if temp_text == 'M':
+        if temp_text in ['M', 'MC']:
             temp_text = ''
-    # TODO 滚轮
+    # 滚轮
     # 如果开启滚轮动作
     if scroll_fingers == finger_set:
         temp_text = 'S'
@@ -263,7 +268,7 @@ def press(d):
         mouse_ctl.setPosition(x, y)
         ht.set_text(f'{int(x)} {int(y)} {temp_text}')
     elif not temp_text:
-            ht.set_text('')
+        ht.set_text('')
     else:
         ht.set_text(temp_text)
 
@@ -419,7 +424,7 @@ def print_info(*args, end='\n', file=None, flush=False):
 
 
 def main():
-    global config, screen_width, screen_height, ratio_width, ratio_height, p1, p2, proportion_width, proportion_height, scroll_x_flip, scroll_y_flip
+    global config, screen_width, screen_height, ratio_width, ratio_height, p1, p2, proportion_width, proportion_height, scroll_x_flip, scroll_y_flip, middle_click_fingers
     global ht, mouse_ctl, left_fingers, right_fingers, middle_fingers, move_finger, move_filter, left_click_finger, right_click_finger, scroll_fingers, scroll_speed
     # 确保工作路径正确
     checkPath()
@@ -436,6 +441,7 @@ def main():
     right_click_finger = set(config['RIGHT_CLICK_FINGER'].split('+'))
     # 获取中键手指
     middle_fingers = set(config['MIDDLE_FINGERS'].split('+'))
+    middle_click_fingers = set(config['MIDDLE_CLICK_FINGER'].split('+'))
     scroll_fingers = set(config['SCROLL_FINGERS'].split('+'))
     scroll_speed = float(config['SCROLL_SPEED'])
     scroll_x_flip = config['SCROLL_X_FLIP'].upper() == 'TRUE'
