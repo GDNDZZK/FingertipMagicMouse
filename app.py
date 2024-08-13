@@ -491,7 +491,7 @@ def main():
     print_info('比例:', proportion_width, proportion_height)
     # 手部识别
     ht = HandTracker(press, camera_id=int(config['CAMERA_ID']),
-                     horizontal_flip=config['HORIZONTAL_FLIP'].upper() == 'TRUE', move_finger=move_finger)
+                     horizontal_flip=config['HORIZONTAL_FLIP'].upper() == 'TRUE', move_finger=move_finger, filter_switch='前置中值滤波' in move_filter, filter_num=int(config['MOVE_SAMPLE_SIZE_PRE_MEDIAN']))
     ht.start()
     # 计算判定范围(相机范围中等比例裁切到屏幕比例)
     camera_width, camera_height = ht.get_camera_size()

@@ -1,11 +1,12 @@
 import cv2
 import mediapipe as mp
+from statistics import median
 from threading import Thread, Event
 import numpy as np
 
 
 class HandTracker:
-    def __init__(self, callback=None, title='FingertipMagicMouse', camera_id=0, horizontal_flip=False, move_finger = '食指'):
+    def __init__(self, callback=None, title='FingertipMagicMouse', camera_id=0, horizontal_flip=False, move_finger='食指', filter_switch=True, filter_num=5):
         self.callback = callback
         self.mp_drawing = mp.solutions.drawing_utils
         self.mp_hands = mp.solutions.hands
@@ -26,6 +27,28 @@ class HandTracker:
         self.camera_width = self.cap.get(cv2.CAP_PROP_FRAME_WIDTH)
         self.camera_height = self.cap.get(cv2.CAP_PROP_FRAME_HEIGHT)
         self.move_finger = move_finger
+        self.history_filter_median_dict = dict()
+        self.filter_switch = filter_switch
+        self.filter_num = filter_num
+
+    def median_filter(self, num, key='default', result_type=None):
+        """使用中值滤波计算当前坐标"""
+        if not self.filter_switch:
+            return num
+        # 将当前坐标添加到历史列表中
+        if not key in self.history_filter_median_dict:
+            self.history_filter_median_dict[key] = list()
+        self.history_filter_median_dict[key].append(num)
+
+        # 如果历史数据超过采样数量，则移除最早的数据
+        if len(self.history_filter_median_dict[key]) > self.filter_num:
+            self.history_filter_median_dict[key].pop(0)
+
+        # 分别计算x和y坐标的中值
+        result = median([coord for coord in self.history_filter_median_dict[key]])
+        if result_type is None:
+            result_type = type(num)
+        return result_type(result)
 
     def _process_frame(self):
         while self.running.is_set():
@@ -54,6 +77,9 @@ class HandTracker:
                         # 同时包含归一化坐标
                         x_norm = landmark.x
                         y_norm = landmark.y
+                        # 为所有坐标中值滤波
+                        x_pixel, y_pixel, z, x_norm, y_norm = self.median_filter(x_pixel, f"{hand_type}{idx}x_pixel"), self.median_filter(y_pixel, f"{hand_type}{idx}y_pixel"), self.median_filter(
+                            z, f"{hand_type}{idx}z"), self.median_filter(x_norm, f"{hand_type}{idx}x_norm"), self.median_filter(y_norm, f"{hand_type}{idx}y_norm")
                         hand_points[idx+1] = [x_pixel, y_pixel, z, x_norm, y_norm]
                     hand_data.append({"type": hand_type, **hand_points})
 
@@ -70,7 +96,8 @@ class HandTracker:
                         # cv2.putText(frame, f"{idx+1}:({x_pixel},{y_pixel},{z:.2f}) - ({x_norm:.2f},{y_norm:.2f})", (x_pixel, y_pixel-20), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 255, 255), 2)
                         # cv2.putText(frame, f"{idx+1}" if not idx + 1 == 1 else f"{idx+1} Type: {hand_info['type']}", (x_pixel, y_pixel-20), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 255, 255), 2)
                         if idx + 1 == 1:
-                            cv2.putText(frame, f"{hand_info['type']}", (
+                            t = hand_info['type']
+                            cv2.putText(frame, t, (
                                 x_pixel, y_pixel-20), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 255, 255), 2)
                         elif idx+1 == 9 and self.move_finger == '食指':
                             cv2.putText(frame, '^', (
