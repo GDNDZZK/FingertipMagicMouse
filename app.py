@@ -475,7 +475,7 @@ def main():
     # 获取中键手指
     middle_fingers = set(config['MIDDLE_FINGERS'].split('+'))
     middle_click_fingers = set(config['MIDDLE_CLICK_FINGER'].split('+'))
-    middle_double_click_fingers = set(config['MIDDLE_DOUBLE_CLICK_FINGERS'].split('+'))
+    middle_double_click_fingers = set(config['MIDDLE_DOUBLE_CLICK_FINGER'].split('+'))
     scroll_fingers = set(config['SCROLL_FINGERS'].split('+'))
     scroll_speed = float(config['SCROLL_SPEED'])
     scroll_x_flip = config['SCROLL_X_FLIP'].upper() == 'TRUE'
