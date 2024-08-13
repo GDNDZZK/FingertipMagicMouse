@@ -150,7 +150,8 @@ scroll_point = None
 
 def press(d):
     """处理每一帧传入的数据,判断与执行"""
-    global now_distance, temp_text, left_fingers, right_fingers, middle_fingers, move_finger, left_click_finger, right_click_finger, scroll_point, scroll_speed, proportion_height, proportion_width, scroll_x_flip, scroll_y_flip, middle_click_fingers
+    global now_distance, temp_text, left_fingers, right_fingers, middle_fingers, move_finger, left_click_finger, right_click_finger, scroll_point, scroll_speed, proportion_height
+    global proportion_width, scroll_x_flip, scroll_y_flip, middle_click_fingers, left_double_click_fingers, right_double_click_fingers, middle_double_click_fingers
     if not d:
         return
     # 要判断的手
@@ -207,9 +208,19 @@ def press(d):
             temp_text = 'LC'
             time.sleep(0.01)
             mouse_ctl.releaseLeftButton()
+    elif left_double_click_fingers == finger_set:
+        if not temp_text == 'LDC':
+            mouse_ctl.pressLeftButton()
+            temp_text = 'LDC'
+            time.sleep(0.01)
+            mouse_ctl.releaseLeftButton()
+            time.sleep(0.02)
+            mouse_ctl.pressLeftButton()
+            time.sleep(0.01)
+            mouse_ctl.releaseLeftButton()
     else:
         mouse_ctl.releaseLeftButton()
-        if temp_text in ['L', 'LC']:
+        if temp_text in ['L', 'LC', 'LDC']:
             temp_text = ''
     # 右键
     if right_fingers == finger_set:
@@ -221,9 +232,19 @@ def press(d):
             temp_text = 'RC'
             time.sleep(0.01)
             mouse_ctl.releaseRightButton()
+    elif right_double_click_fingers == finger_set:
+        if not temp_text == 'RDC':
+            mouse_ctl.pressRightButton()
+            temp_text = 'RDC'
+            time.sleep(0.01)
+            mouse_ctl.releaseRightButton()
+            time.sleep(0.02)
+            mouse_ctl.pressRightButton()
+            time.sleep(0.01)
+            mouse_ctl.releaseRightButton()
     else:
         mouse_ctl.releaseRightButton()
-        if temp_text in ['R', 'RC']:
+        if temp_text in ['R', 'RC', 'RDC']:
             temp_text = ''
     # 中键
     if middle_fingers == finger_set:
@@ -234,9 +255,18 @@ def press(d):
         temp_text = 'MC'
         time.sleep(0.01)
         mouse_ctl.releaseMiddleButton()
+    elif middle_double_click_fingers == finger_set:
+        mouse_ctl.pressMiddleButton()
+        temp_text = 'MDC'
+        time.sleep(0.01)
+        mouse_ctl.releaseMiddleButton()
+        time.sleep(0.02)
+        mouse_ctl.pressMiddleButton()
+        time.sleep(0.01)
+        mouse_ctl.releaseMiddleButton()
     else:
         mouse_ctl.releaseMiddleButton()
-        if temp_text in ['M', 'MC']:
+        if temp_text in ['M', 'MC', 'MDC']:
             temp_text = ''
     # 滚轮
     # 如果开启滚轮动作
@@ -426,6 +456,7 @@ def print_info(*args, end='\n', file=None, flush=False):
 def main():
     global config, screen_width, screen_height, ratio_width, ratio_height, p1, p2, proportion_width, proportion_height, scroll_x_flip, scroll_y_flip, middle_click_fingers
     global ht, mouse_ctl, left_fingers, right_fingers, middle_fingers, move_finger, move_filter, left_click_finger, right_click_finger, scroll_fingers, scroll_speed
+    global left_double_click_fingers, right_double_click_fingers, middle_double_click_fingers
     # 确保工作路径正确
     checkPath()
     # 获取设置
@@ -436,12 +467,15 @@ def main():
     # 获取左键手指
     left_fingers = set(config['LEFT_FINGERS'].split('+'))
     left_click_finger = set(config['LEFT_CLICK_FINGER'].split('+'))
+    left_double_click_fingers = set(config['LEFT_DOUBLE_CLICK_FINGER'].split('+'))
     # 获取右键手指
     right_fingers = set(config['RIGHT_FINGERS'].split('+'))
     right_click_finger = set(config['RIGHT_CLICK_FINGER'].split('+'))
+    right_double_click_fingers = set(config['RIGHT_DOUBLE_CLICK_FINGER'].split('+'))
     # 获取中键手指
     middle_fingers = set(config['MIDDLE_FINGERS'].split('+'))
     middle_click_fingers = set(config['MIDDLE_CLICK_FINGER'].split('+'))
+    middle_double_click_fingers = set(config['MIDDLE_DOUBLE_CLICK_FINGERS'].split('+'))
     scroll_fingers = set(config['SCROLL_FINGERS'].split('+'))
     scroll_speed = float(config['SCROLL_SPEED'])
     scroll_x_flip = config['SCROLL_X_FLIP'].upper() == 'TRUE'
