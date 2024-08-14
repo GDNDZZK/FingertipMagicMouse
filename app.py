@@ -251,19 +251,21 @@ def press(d):
         mouse_ctl.pressMiddleButton()
         temp_text = 'M'
     elif middle_click_fingers == finger_set:
-        mouse_ctl.pressMiddleButton()
-        temp_text = 'MC'
-        time.sleep(0.01)
-        mouse_ctl.releaseMiddleButton()
+        if not temp_text == 'MC':
+            mouse_ctl.pressMiddleButton()
+            temp_text = 'MC'
+            time.sleep(0.01)
+            mouse_ctl.releaseMiddleButton()
     elif middle_double_click_fingers == finger_set:
-        mouse_ctl.pressMiddleButton()
-        temp_text = 'MDC'
-        time.sleep(0.01)
-        mouse_ctl.releaseMiddleButton()
-        time.sleep(0.02)
-        mouse_ctl.pressMiddleButton()
-        time.sleep(0.01)
-        mouse_ctl.releaseMiddleButton()
+        if not temp_text == 'MDC':
+            mouse_ctl.pressMiddleButton()
+            temp_text = 'MDC'
+            time.sleep(0.01)
+            mouse_ctl.releaseMiddleButton()
+            time.sleep(0.02)
+            mouse_ctl.pressMiddleButton()
+            time.sleep(0.01)
+            mouse_ctl.releaseMiddleButton()
     else:
         mouse_ctl.releaseMiddleButton()
         if temp_text in ['M', 'MC', 'MDC']:
