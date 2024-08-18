@@ -1,4 +1,3 @@
-import json
 import os
 
 setting_dict = dict()

@@ -2,7 +2,6 @@ import cv2
 import mediapipe as mp
 from statistics import median
 from threading import Thread, Event
-import numpy as np
 
 
 class HandTracker:

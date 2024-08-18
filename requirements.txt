@@ -1,0 +1,7 @@
+filterpy
+mediapipe
+numpy
+opencv_python
+Pillow
+pynput
+pystray
