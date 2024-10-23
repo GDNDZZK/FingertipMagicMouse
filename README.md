@@ -2,7 +2,7 @@
 
 [![GitHub license](https://img.shields.io/github/license/GDNDZZK/FingertipMagicMouse.svg)](https://github.com/GDNDZZK/FingertipMagicMouse/blob/master/LICENSE) ![Python版本](https://img.shields.io/badge/python-3.7+-yellow)
 
-在吃烧烤炸鸡等时戴着手套不方便操作,摘下手套又麻烦,直接操作怕弄脏,怎么办呢?指尖魔鼠它来了!隔空控制你的鼠标!
+在吃烧烤炸鸡等时戴着手套不方便操作,摘下手套又麻烦,直接操作怕弄脏,怎么办呢?指尖魔鼠它来了!隔空操作你的电脑!
 
 [演示视频...还没做](https://www.bilibili.com/video/BV)
 
@@ -22,7 +22,7 @@
    ```
    FingertipMagicMouse.exe
    ```
-3. 开始使用
+3. 开始使用键盘控制鼠标
 
 #### 2.从源代码构建
 
