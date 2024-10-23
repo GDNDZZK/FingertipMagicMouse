@@ -1,7 +1,9 @@
-filterpy
-mediapipe
-numpy
-opencv_python
-Pillow
-pynput
-pystray
+filterpy==1.4.5
+Flask==3.0.3
+mediapipe==0.10.11
+numpy==2.1.2
+opencv_python==4.10.0.84
+Pillow==11.0.0
+pynput==1.7.6
+pyrtmp==0.3.1
+pystray==0.19.5
