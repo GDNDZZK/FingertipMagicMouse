@@ -5,7 +5,7 @@ from threading import Thread, Event
 
 
 class HandTracker:
-    def __init__(self, callback=None, title='FingertipMagicMouse', camera_id=0, horizontal_flip=False, move_finger='食指', filter_switch=True, filter_num=5):
+    def __init__(self, callback=None, title='FingertipMagicMouse', camera_id=0, horizontal_flip=False, move_finger='食指', filter_switch=True, filter_num=5, vertical_flip = False):
         self.callback = callback
         self.mp_drawing = mp.solutions.drawing_utils
         self.mp_hands = mp.solutions.hands
@@ -23,6 +23,7 @@ class HandTracker:
         self.text_rgb = (255, 255, 255)
         self.title = title
         self.horizontal_flip = horizontal_flip
+        self.vertical_flip = vertical_flip
         self.camera_width = self.cap.get(cv2.CAP_PROP_FRAME_WIDTH)
         self.camera_height = self.cap.get(cv2.CAP_PROP_FRAME_HEIGHT)
         self.move_finger = move_finger
@@ -59,6 +60,8 @@ class HandTracker:
             frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
             if self.horizontal_flip:
                 frame = cv2.flip(frame, 1)
+            if self.vertical_flip:
+                frame = cv2.flip(frame, 0)
             results = self.hands.process(frame)
 
             hand_data = []

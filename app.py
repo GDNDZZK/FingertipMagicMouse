@@ -4,7 +4,6 @@ import numpy as np
 from filterpy.kalman import KalmanFilter
 import os
 import sys
-import tkinter as tk
 from PIL import ImageGrab
 from util.SystemTrayIcon import SystemTrayIcon
 from util.handTracker import HandTracker
@@ -315,6 +314,7 @@ def get_screen_resolution():
 
 def get_screen_resolution_tkinter():
     """获取屏幕分辨率(受系统缩放倍率影响)"""
+    import tkinter as tk
     # 创建窗口
     tk_root = tk.Tk()
     # 通过窗口大小得到分辨率
@@ -486,13 +486,22 @@ def main():
     # 鼠标控制器
     mouse_ctl = MouseController()
     # 获取屏幕分辨率
-    screen_width, screen_height = get_screen_resolution()
+    try:
+        screen_width, screen_height = get_screen_resolution()
+    except OSError:
+        print('Warning: 使用ImageGrab.grab()获取分辨率失败,尝试使用tkinter')
+        # 获取失败时尝试使用另一种方式
+        try:
+            screen_width, screen_height = get_screen_resolution_tkinter()
+        except ModuleNotFoundError as e:
+            print("Warning: 无法获取屏幕分辨率,如果在Linux下出现此错误请手动安装`python3-tk`软件包,例如deb系使用`sudo apt-get install python3-tk`")
+            raise e
     print_info('分辨率:', screen_width, screen_height)
     proportion_width, proportion_height = calculate_simplified_ratio(screen_width, screen_height)
     print_info('比例:', proportion_width, proportion_height)
     # 手部识别
     ht = HandTracker(press, camera_id=int(config['CAMERA_ID']),
-                     horizontal_flip=config['HORIZONTAL_FLIP'].upper() == 'TRUE', move_finger=move_finger, filter_switch='前置中值滤波' in move_filter, filter_num=int(config['MOVE_SAMPLE_SIZE_PRE_MEDIAN']))
+                     horizontal_flip=config['HORIZONTAL_FLIP'].upper() == 'TRUE', move_finger=move_finger, filter_switch='前置中值滤波' in move_filter, filter_num=int(config['MOVE_SAMPLE_SIZE_PRE_MEDIAN']),vertical_flip = config['VERTICAL_FLIP'].upper() == 'TRUE')
     ht.start()
     # 计算判定范围(相机范围中等比例裁切到屏幕比例)
     camera_width, camera_height = ht.get_camera_size()
