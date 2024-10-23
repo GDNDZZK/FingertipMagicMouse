@@ -46,7 +46,6 @@
 
 ## 注意事项
 
-- pynput在Linux Wayland下可能无法正常工作,如果你正在用Linux请使用X11
 - Linux下运行如果出现报错 `ModuleNotFoundError: No module named 'tkinter'`请手动安装 `python3-tk`软件包,例如deb系使用 `sudo apt-get install python3-tk`
 
 ## 自定义设置
