@@ -4,7 +4,7 @@
 
 在吃烧烤炸鸡等时戴着手套不方便操作,摘下手套又麻烦,直接操作怕弄脏,怎么办呢?指尖魔鼠它来了!隔空操作你的电脑!
 
-[演示视频...还没做](https://www.bilibili.com/video/BV)
+[演示视频](https://www.bilibili.com/video/BV1vNyXYxEdX/)
 
 ## 功能特点
 
@@ -28,17 +28,18 @@
 
 1. 克隆或下载此仓库到本地
 2. 确保你的Python版本在3.7及以上
-3. 安装必要的Python库：
+   (已测试3.10和3.11,如果你的Python版本较低可能要手动降低部分库的版本)
+4. 安装必要的Python库：
 
    ```shell
    pip install -r requirements.txt
    ```
-4. 运行程序：
+5. 运行程序：
 
    ```
    app.py
    ```
-5. 开始使用
+6. 开始使用
 
 ## 默认手势
 
